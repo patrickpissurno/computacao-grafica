@@ -43,7 +43,7 @@ class Model {
                     vmap[key] = vertices.length;
                     vertices.push(item);
                 }
-                
+
                 f.push(vmap[key]);
             }
             faces.push(new Face(f));
@@ -91,11 +91,18 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
-    let projetado = multiplyMatrices(copy.vertices, [
+    let perspectiva = multiplyMatrices(copy.vertices, [
         [ 0.707,  0.408, 0, 0 ],
         [ 0,      0.816, 0, 0 ],
         [ 0.707, -0.408, 0, 0 ],
         [ 0,      0,     0, 1 ],
+    ]);
+
+    let projetado = multiplyMatrices(perspectiva, [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 1],
     ]);
 
     for(let i = 0; i < projetado.length; i++)
