@@ -1,28 +1,3 @@
-class Face {
-    /** @param {number[]} verticesIndices */
-    constructor(verticesIndices) {
-        this.vertices = verticesIndices;
-    }
-}
-
-class Model {
-    /**
-     * @param {number[]} vertices 
-     * @param {Face[]} faces 
-     */
-    constructor(vertices, faces){
-        this.vertices = vertices;
-        this.faces = faces;
-    }
-}
-
-class Object {
-    /** @param {Model} model */
-    constructor(model){
-        this.model = model;
-    }
-}
-
 function multiplyMatrices(m1, m2) {
     const result = [];
     for (let i = 0; i < m1.length; i++) {
@@ -39,102 +14,73 @@ function multiplyMatrices(m1, m2) {
     return result;
 }
 
-const cuboVertices = [
-    //face traseira
-    [0,0,0],
-    [1,0,0],
-    [1,1,0],
-    [0,1,0],
+class Face {
+    /** @param {number[]} verticesIndices */
+    constructor(verticesIndices) {
+        this.vertices = verticesIndices;
+    }
+}
 
-    //face frontal
-    [0,0,1],
-    [1,0,1],
-    [1,1,1],
-    [0,1,1],
+class Model {
+    /**
+     * @param {number[]} vertices 
+     * @param {Face[]} faces 
+     */
+    constructor(vertices, faces){
+        this.vertices = vertices;
+        this.faces = faces;
+    }
 
-    //face superior
-    // [0,0,0], //0
-    // [1,0,0], //1
-    // [1,0,1], //5
-    // [0,0,1], //4
+    static import(raw){
+        let vertices = {};
+        let faces = [];
+        for(let face of raw.faces){
+            let f = [];
+            for(let item of face.v){
+                vertices[item.join('')] = item;
+                f.push(Object.keys(vertices).indexOf(item.join('')));
+            }
+            faces.push(new Face(f));
+        }
+        return new Model(Object.values(vertices), faces);
+    }
+}
 
-    //face inferior
-    // [0,1,0], //3
-    // [1,1,0], //2
-    // [1,1,1], //6
-    // [0,1,1], //7
+class Obj {
+    /** @param {Model} model */
+    constructor(model){
+        this.originalModel = model;
+        this.model = JSON.parse(JSON.stringify(model)); //clona
+    }
+    apply(transformationMatrix){
+        for(let vertice of this.model.vertices)
+            vertice.push(1); //adiciona a coordenada homogênea
 
-    //face esquerda
-    // [0,0,0], //0
-    // [0,0,1], //4
-    // [0,1,1], //7
-    // [0,1,0], //3
+        let resultado = multiplyMatrices(this.model.vertices, transformationMatrix);
 
-    // //face direita
-    // [1,0,0], //1
-    // [1,0,1], //5
-    // [1,1,1], //6
-    // [1,1,0], //2
-];
-const cuboModel = new Model(cuboVertices, [
-    new Face([ //face traseira
-        0,
-        1,
-        2,
-        3,
-    ]),
-    new Face([ //face frontal
-        4,
-        5,
-        6,
-        7,
-    ]),
-    new Face([ //face superior
-        0,
-        1,
-        5,
-        4,
-    ]),
-    new Face([ //face inferior
-        3,
-        2,
-        6,
-        7,
-    ]),
-    new Face([ //face esquerda
-        0,
-        4,
-        7,
-        3,
-    ]),
-    new Face([ //face direita
-        1,
-        5,
-        6,
-        2,
-    ]),
-]);
+        for(let i = 0; i < resultado.length; i++)
+        for(let j = 0; j < resultado[i].length; j++)
+            this.model.vertices[i][j] = resultado[i][j] / resultado[i][3]; //atualiza normalizando pela homogênea
+    
+        for(let vertice of this.model.vertices)
+            vertice.pop(); //remove a coordenada homogênea
+    }
+}
+
+const myObj = new Obj(Model.import(window.model));
+window.myObj = myObj;
 
 const canvas = document.getElementById("canvas");
 
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
-// function desenharQuadrado(){
-//     ctx.beginPath();
-//     ctx.moveTo(100, 100);
-//     ctx.lineTo(200, 100);
-//     ctx.lineTo(200, 200);
-//     ctx.lineTo(100, 200);
-//     ctx.fill();
-// }
+/** @param {Obj} obj */
+function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
+    ctx.clearRect(0, 0, 800, 600); //limpa a tela
 
-// desenharQuadrado();
-
-/** @param {Model} model */
-function renderModel(model, scale = 1, offset_x = 0, offset_y = 0){
     /** @type {Model} */
-    const copy = JSON.parse(JSON.stringify(model));
+    const copy = JSON.parse(JSON.stringify(obj.model)); //isso aqui está clonando o model
 
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
@@ -148,29 +94,7 @@ function renderModel(model, scale = 1, offset_x = 0, offset_y = 0){
 
     for(let i = 0; i < projetado.length; i++)
     for(let j = 0; j < projetado[i].length; j++)
-        copy.vertices[i][j] = projetado[i][j];
-
-    //TODO: tentar fazer um algorítimo para ordenar as faces antes de renderizar (da mais longe para a mais perto)
-    // copy.faces.sort((a, b) => {
-    //     const verticesA = a.vertices.map(i => copy.vertices[i]);
-    //     const verticesB = b.vertices.map(i => copy.vertices[i]);
-
-    //     const avgA = verticesA.reduce((acc, v) => [
-    //         acc[0] + v[0],
-    //         acc[1] + v[1],
-    //         acc[2] + v[2]
-    //     ], [0, 0, 0]).map(x => x / verticesA.length);
-
-    //     const avgB = verticesB.reduce((acc, v) => [
-    //         acc[0] + v[0],
-    //         acc[1] + v[1],
-    //         acc[2] + v[2]
-    //     ], [0, 0, 0]).map(x => x / verticesB.length);
-
-    //     console.log({ avgA, avgB });
-
-    //     return Math.sign(avgB[1] - avgA[1]);
-    // });
+        copy.vertices[i][j] = projetado[i][j] / projetado[i][3]; //normaliza pela coordenada homogênea
 
     const colors = [
         'red',
@@ -189,16 +113,14 @@ function renderModel(model, scale = 1, offset_x = 0, offset_y = 0){
         for(let n = 0; n < face.vertices.length + 1; n++){
             const v = face.vertices[n % face.vertices.length];
             const vertex = copy.vertices[v];
-            ctx.lineTo(offset_x + vertex[0] * scale, offset_y + vertex[1] * scale);
+            ctx.lineTo(offset_x + vertex[0] * scale, offset_y - vertex[1] * scale);
         }
 
-        // ctx.fillStyle = colors[colorIndex++];
-        // ctx.fill();
         ctx.strokeStyle = colors[colorIndex++];
         ctx.stroke();
     }
 
-    window.copy = copy;
+    window.copy = copy; //somente para debug
 }
 
-renderModel(cuboModel, 100, 800/2 - 100/2, 600/2 - 100/2);
+renderObj(myObj, 100, 800/2 - 100/2, 600/2 + 100/2);
