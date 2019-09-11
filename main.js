@@ -32,17 +32,23 @@ class Model {
     }
 
     static import(raw){
-        let vertices = {};
+        let vmap = {};
+        let vertices = [];
         let faces = [];
         for(let face of raw.faces){
             let f = [];
             for(let item of face.v){
-                vertices[item.join('')] = item;
-                f.push(Object.keys(vertices).indexOf(item.join('')));
+                const key = item.join('');
+                if(vmap[key] == null){
+                    vmap[key] = vertices.length;
+                    vertices.push(item);
+                }
+                
+                f.push(vmap[key]);
             }
             faces.push(new Face(f));
         }
-        return new Model(Object.values(vertices), faces);
+        return new Model(vertices, faces);
     }
 }
 
