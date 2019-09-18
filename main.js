@@ -91,6 +91,10 @@ const canvas = document.getElementById("canvas");
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
+const CAMERA_X = -0.5;
+const CAMERA_Y = -0.5;
+const CAMERA_Z = -1;
+
 /** @param {Obj} obj */
 function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     ctx.clearRect(0, 0, 800, 600); //limpa a tela
@@ -101,21 +105,17 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
-    // let perspectiva = multiplyMatrices(copy.vertices, [
-    //     [ 0.707,  0.408, 0, 0 ],
-    //     [ 0,      0.816, 0, 0 ],
-    //     [ 0.707, -0.408, 0, 0 ],
-    //     [ 0,      0,     0, 1 ],
-    // ]);
-
-    let perspectiva = multiplyMatrices(copy.vertices, [
+    let m = [
         [1,0,0,0],
         [0,1,0,0],
         [0,0,1,0],
-        [0.3,-1.7,-2.5,0],
-    ]);
-    perspectiva = multiplyMatrices(perspectiva, getProjectionMatrix(60, 0.1, 100));
-    
+        [CAMERA_X,CAMERA_Y,-CAMERA_Z,1],
+    ];
+
+    m = multiplyMatrices(m, getProjectionMatrix(20, 0.1, 100));
+
+    let perspectiva = multiplyMatrices(copy.vertices, m);
+
     for(let i = 0; i < perspectiva.length; i++)
     for(let j = 0; j < perspectiva[i].length; j++)
         perspectiva[i][j] = perspectiva[i][j] / perspectiva[i][3]; //normaliza pela coordenada homogênea
@@ -148,7 +148,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         for(let n = 0; n < face.vertices.length + 1; n++){
             const v = face.vertices[n % face.vertices.length];
             const vertex = copy.vertices[v];
-            ctx.lineTo(offset_x + vertex[0] * scale, offset_y - vertex[1] * scale);
+            ctx.lineTo(offset_x + -vertex[0] * scale, offset_y + vertex[1] * scale);
         }
 
         ctx.strokeStyle = colors[colorIndex++];
@@ -158,5 +158,51 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     window.copy = copy; //somente para debug
 }
 
-// renderObj(myObj, 100, 800/2 - 100/2, 600/2 + 100/2);
-renderObj(myObj, 100, 800/2, 600/2);
+let x = 0;
+let s = 1;
+
+//render loop
+setInterval(() => {
+    const add = 0.05;
+    x += add * s;
+
+    if(Math.abs(x) > 1.5)
+        s *= -1;
+
+    //desloca o obj pro centro do sist. coord.
+    let m = [
+        [ 1, 0, 0, 0],
+        [ 0, 1, 0, 0],
+        [ 0, 0, 1, 0],
+        [ -0.5, -0.5, -0.5, 1],
+    ];
+
+    //rotaciona
+    let a = 0.05;
+    m = multiplyMatrices(m, [
+        [ Math.cos(a), 0, -Math.sin(a), 0 ],
+        [ 0, 1, 0, 0 ],
+        [ Math.sin(a), 0, Math.cos(a), 0 ],
+        [ 0, 0, 0, 1 ],
+    ]);
+
+    //desloca o obj de volta
+    m = multiplyMatrices(m, [
+        [ 1, 0, 0, 0],
+        [ 0, 1, 0, 0],
+        [ 0, 0, 1, 0],
+        [ 0.5, 0.5, 0.5, 1],
+    ]);
+
+    //translada o obj verticalmente
+    m = multiplyMatrices(m, [
+        [ 1, 0, 0, 0 ],
+        [ 0, 1, 0, 0 ],
+        [ 0, 0, 1, 0 ],
+        [ 0, add * s, 0, 1 ],
+    ]);
+
+    //aplica as transformações
+    myObj.apply(m);
+    renderObj(myObj, 80, 800/2, 600/2);
+}, 1000 / 60)
