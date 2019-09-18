@@ -14,6 +14,16 @@ function multiplyMatrices(m1, m2) {
     return result;
 }
 
+function getProjectionMatrix(angleOfView, nearPlane, farPlane){
+    const scale = 1 / Math.tan(angleOfView * 0.5 * Math.PI / 180);
+    return [
+        [scale, 0, 0, 0],
+        [0, scale, 0, 0],
+        [0, 0, -farPlane / (farPlane - nearPlane), -1],
+        [0, 0, -farPlane * nearPlane / (farPlane - nearPlane), 0],
+    ];
+}
+
 class Face {
     /** @param {number[]} verticesIndices */
     constructor(verticesIndices) {
@@ -91,12 +101,24 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
+    // let perspectiva = multiplyMatrices(copy.vertices, [
+    //     [ 0.707,  0.408, 0, 0 ],
+    //     [ 0,      0.816, 0, 0 ],
+    //     [ 0.707, -0.408, 0, 0 ],
+    //     [ 0,      0,     0, 1 ],
+    // ]);
+
     let perspectiva = multiplyMatrices(copy.vertices, [
-        [ 0.707,  0.408, 0, 0 ],
-        [ 0,      0.816, 0, 0 ],
-        [ 0.707, -0.408, 0, 0 ],
-        [ 0,      0,     0, 1 ],
+        [1,0,0,0],
+        [0,1,0,0],
+        [0,0,1,0],
+        [0.3,-1.7,-2.5,0],
     ]);
+    perspectiva = multiplyMatrices(perspectiva, getProjectionMatrix(60, 0.1, 100));
+    
+    for(let i = 0; i < perspectiva.length; i++)
+    for(let j = 0; j < perspectiva[i].length; j++)
+        perspectiva[i][j] = perspectiva[i][j] / perspectiva[i][3]; //normaliza pela coordenada homogênea
 
     let projetado = multiplyMatrices(perspectiva, [
         [1, 0, 0, 0],
@@ -107,7 +129,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
     for(let i = 0; i < projetado.length; i++)
     for(let j = 0; j < projetado[i].length; j++)
-        copy.vertices[i][j] = projetado[i][j] / projetado[i][3]; //normaliza pela coordenada homogênea
+        copy.vertices[i][j] = projetado[i][j];
 
     const colors = [
         'red',
@@ -136,4 +158,5 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     window.copy = copy; //somente para debug
 }
 
-renderObj(myObj, 100, 800/2 - 100/2, 600/2 + 100/2);
+// renderObj(myObj, 100, 800/2 - 100/2, 600/2 + 100/2);
+renderObj(myObj, 100, 800/2, 600/2);
