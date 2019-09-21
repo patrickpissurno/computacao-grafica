@@ -101,7 +101,7 @@ const ctx = canvas.getContext("2d");
 
 const CAMERA_X = -0.5;
 const CAMERA_Y = -0.5;
-const CAMERA_Z = -1;
+const CAMERA_Z = -2;
 
 /** @param {Obj} obj */
 function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
