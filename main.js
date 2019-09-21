@@ -41,6 +41,14 @@ class Model {
         this.faces = faces;
     }
 
+    /**
+     * realiza uma cópia profunda do objeto e seu conteúdo
+     */
+    clone(){
+        const cloned = JSON.parse(JSON.stringify(this));
+        return new Model(cloned.vertices, cloned.faces);
+    }
+
     static import(raw){
         let vmap = {};
         let vertices = [];
@@ -66,7 +74,7 @@ class Obj {
     /** @param {Model} model */
     constructor(model){
         this.originalModel = model;
-        this.model = JSON.parse(JSON.stringify(model)); //clona
+        this.model = model.clone(); //clona
     }
     apply(transformationMatrix){
         for(let vertice of this.model.vertices)
@@ -100,7 +108,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     ctx.clearRect(0, 0, 800, 600); //limpa a tela
 
     /** @type {Model} */
-    const copy = JSON.parse(JSON.stringify(obj.model)); //isso aqui está clonando o model
+    const copy = obj.model.clone();
 
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
@@ -158,51 +166,66 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     window.copy = copy; //somente para debug
 }
 
-let x = 0;
-let s = 1;
+let keyframe = -1;
+/** @type {Model} */
+let beforeModel = null;
+/** @type {Model} */
+let targetModel = null;
+let frameStartTime = null;
 
-//render loop
-setInterval(() => {
-    const add = 0.05;
-    x += add * s;
+function nextKeyframe(){
+    if(targetModel != null)
+        myObj.model = targetModel;
 
-    if(Math.abs(x) > 1.5)
-        s *= -1;
+    keyframe += 1;
+    if(keyframe >= window.animation.keyframes.length){
+        if(window.animation.loop)
+            keyframe = 0;
+        else {
+            keyframe = -1;
+            return;
+        }
+    }
 
-    //desloca o obj pro centro do sist. coord.
-    let m = [
-        [ 1, 0, 0, 0],
-        [ 0, 1, 0, 0],
-        [ 0, 0, 1, 0],
-        [ -0.5, -0.5, -0.5, 1],
-    ];
+    const frame = window.animation.keyframes[keyframe];
 
-    //rotaciona
-    let a = 0.05;
-    m = multiplyMatrices(m, [
-        [ Math.cos(a), 0, -Math.sin(a), 0 ],
-        [ 0, 1, 0, 0 ],
-        [ Math.sin(a), 0, Math.cos(a), 0 ],
-        [ 0, 0, 0, 1 ],
-    ]);
+    if(keyframe > 0){
+        beforeModel = myObj.model.clone(); //clona o frame atual
 
-    //desloca o obj de volta
-    m = multiplyMatrices(m, [
-        [ 1, 0, 0, 0],
-        [ 0, 1, 0, 0],
-        [ 0, 0, 1, 0],
-        [ 0.5, 0.5, 0.5, 1],
-    ]);
+        myObj.apply(frame.matrix);
+        targetModel = myObj.model.clone(); //clona o frame alvo
 
-    //translada o obj verticalmente
-    m = multiplyMatrices(m, [
-        [ 1, 0, 0, 0 ],
-        [ 0, 1, 0, 0 ],
-        [ 0, 0, 1, 0 ],
-        [ 0, add * s, 0, 1 ],
-    ]);
+        myObj.model = beforeModel.clone(); //restaura o frame atual
+    }
+    else { //no primeiro frame a gente não quer realizar interpolação (inbetweening)
+        myObj.apply(frame.matrix);
+        beforeModel = myObj.model.clone(); //clona o frame alvo
+        targetModel = myObj.model.clone(); //clona o frame alvo
+    }
 
-    //aplica as transformações
-    myObj.apply(m);
+    frameStartTime = new Date();
+    setTimeout(nextKeyframe, frame.duration);
+}
+
+function renderLoop(){
+    if(keyframe >= 0){
+        const frame = window.animation.keyframes[keyframe];
+
+        const ellapsedMillis = new Date() - frameStartTime;
+        const progress = ellapsedMillis / frame.duration;
+
+        for(let i = 0; i < myObj.model.vertices.length; i++){
+            const b = beforeModel.vertices[i];
+            const t = targetModel.vertices[i];
+
+            for(let j = 0; j < myObj.model.vertices[i].length; j++)
+                myObj.model.vertices[i][j] =  b[j] * (1 - progress) + t[j] * progress;
+        }
+    }
+
     renderObj(myObj, 80, 800/2, 600/2);
-}, 1000 / 60)
+}
+
+//start
+nextKeyframe();
+setInterval(renderLoop, 1000/60);
