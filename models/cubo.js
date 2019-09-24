@@ -1,4 +1,6 @@
 window.model = {
+    scale: 1,
+    offset: [-0.5,-0.5,-0.5],
     faces: [
         //frontal
         { v: [

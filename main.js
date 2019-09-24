@@ -66,6 +66,11 @@ class Model {
             }
             faces.push(new Face(f));
         }
+
+        //converte as coordenadas dos vértices do SRO para o SRU
+        for(let vertice of vertices)
+            for(let i = 0; i < vertice.length; i++)
+                vertice[i] = (vertice[i] + raw.offset[i]) / raw.scale;
         return new Model(vertices, faces);
     }
 }
@@ -99,8 +104,8 @@ const canvas = document.getElementById("canvas");
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
-const CAMERA_X = -0.5;
-const CAMERA_Y = -0.5;
+const CAMERA_X = 0;
+const CAMERA_Y = 0;
 const CAMERA_Z = -2;
 
 /** @param {Obj} obj */
@@ -140,12 +145,13 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         copy.vertices[i][j] = projetado[i][j];
 
     const colors = [
-        'red',
-        'yellow',
-        'blue',
+        'lime',
         'magenta',
-        'green',
-        'black'
+        'blue',
+        'orange',
+        'cyan',
+        'red',
+        'black',
     ];
 
     let colorIndex = 0;
@@ -159,7 +165,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
             ctx.lineTo(offset_x + -vertex[0] * scale, offset_y + vertex[1] * scale);
         }
 
-        ctx.strokeStyle = colors[colorIndex++];
+        ctx.strokeStyle = colors[colorIndex++ % colors.length];
         ctx.stroke();
     }
 
