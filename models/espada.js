@@ -54,19 +54,51 @@ window.model = {
         ], c: 'red' },
 
         /** GUARDA-MÃO **/
-        //frontal (guarda-mão)
+        //frontal esquerda (guarda-mão)
         { v: [
             [0,-21,0],
             [0,-23,0],
+            [5,-23,0],
+            [5,-21,0],
+        ], c: 'lime' },
+
+        //frontal central (guarda-mão)
+        { v: [
+            [5,-21,0],
+            [5,-23,0],
+            [7,-23,0],
+            [7,-21,0],
+        ], c: 'lime' },
+
+        //frontal direita (guarda-mão)
+        { v: [
+            [7,-21,0],
+            [7,-23,0],
             [12,-23,0],
             [12,-21,0],
         ], c: 'lime' },
 
-        //traseira (guarda-mão)
+        //traseira esquerda (guarda-mão)
         { v: [
-            [12,-23,2],
+            [5,-23,2],
             [0,-23,2],
             [0,-21,2],
+            [5,-21,2],
+        ], c: 'magenta' },
+
+        //traseira central (guarda-mão)
+        { v: [
+            [7,-23,2],
+            [5,-23,2],
+            [5,-21,2],
+            [7,-21,2],
+        ], c: 'magenta' },
+
+        //traseira direita (guarda-mão)
+        { v: [
+            [12,-23,2],
+            [7,-23,2],
+            [7,-21,2],
             [12,-21,2],
         ], c: 'magenta' },
 
@@ -86,20 +118,36 @@ window.model = {
             [12,-21,2],
         ], c: 'orange' },
 
-        //superior (guarda-mão)
+        //superior esquerda (guarda-mão)
         { v: [
             [0,-21,0],
-            [12,-21,0],
-            [12,-21,2],
+            [4,-21,0],
+            [4,-21,2],
             [0,-21,2],
         ], c: 'cyan' },
 
-        //inferior (guarda-mão)
+        //superior direita (guarda-mão)
+        { v: [
+            [8,-21,0],
+            [12,-21,0],
+            [12,-21,2],
+            [8,-21,2],
+        ], c: 'cyan' },
+
+        //inferior esquerda (guarda-mão)
         { v: [
             [0,-23,2],
+            [5,-23,2],
+            [5,-23,0],
+            [0,-23,0],
+        ], c: 'red' },
+
+        //inferior direita (guarda-mão)
+        { v: [
+            [7,-23,2],
             [12,-23,2],
             [12,-23,0],
-            [0,-23,0],
+            [7,-23,0],
         ], c: 'red' },
 
         /** CABO **/
