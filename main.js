@@ -140,7 +140,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         [1,0,0,0],
         [0,1,0,0],
         [0,0,1,0],
-        [CAMERA_X,CAMERA_Y,-CAMERA_Z,1],
+        [-CAMERA_X,-CAMERA_Y,-CAMERA_Z,1],
     ];
 
     m = multiplyMatrices(m, getProjectionMatrix(20, 0.1, 100));
