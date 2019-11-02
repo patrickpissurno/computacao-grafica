@@ -38,6 +38,19 @@ function distance(vertexA, vertexB){
     return Math.sqrt(squaredDistance(vertexA, vertexB));
 }
 
+/** produto interno */
+function dotProduct(vectorA, vectorB){
+    return (vectorA[0] * vectorB[0]) + (vectorA[1] * vectorB[1]) + (vectorA[2] * vectorB[2]);
+}
+
+/** produto vetorial */
+function crossProduct(vectorA, vectorB){
+    const x = (vectorA[1] * vectorB[2]) - (vectorA[2] * vectorB[1]);
+    const y = (vectorA[0] * vectorB[2]) - (vectorA[2] * vectorB[0]);
+    const z = (vectorA[0] * vectorB[1]) - (vectorA[1] * vectorB[0]);
+    return [ x, y, z ];
+}
+
 class Face {
     /** 
      * @param {number[]} verticesIndices
@@ -122,9 +135,15 @@ const canvas = document.getElementById("canvas");
 /** @type {CanvasRenderingContext2D} */
 const ctx = canvas.getContext("2d");
 
+// posição da câmera no mundo
 const CAMERA_X = 0;
 const CAMERA_Y = 0;
 const CAMERA_Z = -2;
+
+// direção forward da câmera
+const CAMERA_XF = 0;
+const CAMERA_YF = 0;
+const CAMERA_ZF = 1;
 
 /** @param {Obj} obj */
 function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
@@ -150,6 +169,22 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let i = 0; i < perspectiva.length; i++)
     for(let j = 0; j < perspectiva[i].length; j++)
         perspectiva[i][j] = perspectiva[i][j] / perspectiva[i][3]; //normaliza pela coordenada homogênea
+
+    //backface culling
+    for(let i = 0; i < copy.faces.length; i++){
+        const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
+        const v0 = vertices[0];
+        const v1 = vertices[1];
+        const v2 = vertices[2];
+        const vectorA = [ v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] ]; //v1 - v0
+        const vectorB = [ v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2] ]; //v2 - v1
+        const normalVector = crossProduct(vectorA, vectorB);
+        
+        const cos = dotProduct(normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
+        if(cos < 0)
+            copy.faces[i] = null;
+    }
+    copy.faces = copy.faces.filter(x => x != null);
 
     //algoritmo painter: reordena as faces de trás para frente em relação à camera
     copy.faces.sort((a, b) => {
