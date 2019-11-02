@@ -216,12 +216,20 @@ window.model = {
             [8,-30,0],
         ], c: 'magenta' },
 
-        //superior (pomo)
+        //superior esquerda (pomo)
+        { v: [
+            [5,-30,0],
+            [5,-30,2],
+            [4,-30,2],
+            [4,-30,0],
+        ], c: 'blue' },
+
+        //superior direita (pomo)
         { v: [
             [8,-30,0],
             [8,-30,2],
-            [4,-30,2],
-            [4,-30,0],
+            [7,-30,2],
+            [7,-30,0],
         ], c: 'blue' },
 
         //inferior (pomo)

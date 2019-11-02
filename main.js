@@ -155,6 +155,23 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
+    
+    //backface culling
+    for(let i = 0; i < copy.faces.length; i++){
+        const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
+        const v0 = vertices[0];
+        const v1 = vertices[1];
+        const v2 = vertices[2];
+        const vectorA = [ v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] ]; //v1 - v0
+        const vectorB = [ v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2] ]; //v2 - v1
+        const normalVector = crossProduct(vectorA, vectorB);
+        
+        const cos = dotProduct(normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
+        if(cos < -0.005) //aproximação para evitar glitches por conta de erro de ponto flutuante
+            copy.faces[i] = null;
+    }
+    copy.faces = copy.faces.filter(x => x != null);
+
     let m = [
         [1,0,0,0],
         [0,1,0,0],
@@ -169,22 +186,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let i = 0; i < perspectiva.length; i++)
     for(let j = 0; j < perspectiva[i].length; j++)
         perspectiva[i][j] = perspectiva[i][j] / perspectiva[i][3]; //normaliza pela coordenada homogênea
-
-    //backface culling
-    for(let i = 0; i < copy.faces.length; i++){
-        const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
-        const v0 = vertices[0];
-        const v1 = vertices[1];
-        const v2 = vertices[2];
-        const vectorA = [ v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] ]; //v1 - v0
-        const vectorB = [ v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2] ]; //v2 - v1
-        const normalVector = crossProduct(vectorA, vectorB);
-        
-        const cos = dotProduct(normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
-        if(cos < 0)
-            copy.faces[i] = null;
-    }
-    copy.faces = copy.faces.filter(x => x != null);
 
     //algoritmo painter: reordena as faces de trás para frente em relação à camera
     copy.faces.sort((a, b) => {
