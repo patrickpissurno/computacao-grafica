@@ -24,10 +24,28 @@ function getProjectionMatrix(angleOfView, nearPlane, farPlane){
     ];
 }
 
+function squaredDistance(vertexA, vertexB){
+    if(vertexA.length !== vertexB.length)
+        throw new Error('distance(vA, vB): vertices dimensions MUST be equal');
+
+    let sum = 0;
+    for(let i = 0; i < vertexA.length; i++)
+        sum += Math.pow(vertexA[i] - vertexB[i], 2);
+    return sum;
+}
+
+function distance(vertexA, vertexB){
+    return Math.sqrt(squaredDistance(vertexA, vertexB));
+}
+
 class Face {
-    /** @param {number[]} verticesIndices */
-    constructor(verticesIndices) {
+    /** 
+     * @param {number[]} verticesIndices
+     * @param {string} color
+    */
+    constructor(verticesIndices, color) {
         this.vertices = verticesIndices;
+        this.color = color;
     }
 }
 
@@ -64,7 +82,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f));
+            faces.push(new Face(f, face.c));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -133,6 +151,19 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let j = 0; j < perspectiva[i].length; j++)
         perspectiva[i][j] = perspectiva[i][j] / perspectiva[i][3]; //normaliza pela coordenada homogênea
 
+    //algoritmo painter: reordena as faces de trás para frente em relação à camera
+    copy.faces.sort((a, b) => {
+        let aV = a.vertices.map(i => copy.vertices[i]);
+        let bV = b.vertices.map(i => copy.vertices[i]);
+
+        let centerA = aV.reduce((acc, it) => [ acc[0] + it[0], acc[1] + it[1], acc[2] + it[2], acc[3] + it[3] ], [0, 0, 0, 0]).map(x => x / a.vertices.length);
+        let centerB = bV.reduce((acc, it) => [ acc[0] + it[0], acc[1] + it[1], acc[2] + it[2], acc[3] + it[3] ], [0, 0, 0, 0]).map(x => x / b.vertices.length);
+        
+        let distA = squaredDistance(centerA, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
+        let distB = squaredDistance(centerB, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
+        return distB - distA;
+    });
+
     let projetado = multiplyMatrices(perspectiva, [
         [1, 0, 0, 0],
         [0, 1, 0, 0],
@@ -144,18 +175,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let j = 0; j < projetado[i].length; j++)
         copy.vertices[i][j] = projetado[i][j];
 
-    const colors = [
-        'lime',
-        'magenta',
-        'blue',
-        'orange',
-        'cyan',
-        'red',
-        'black',
-    ];
-
-    let colorIndex = 0;
-
     for(let face of copy.faces){
         ctx.beginPath();
 
@@ -165,8 +184,8 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
             ctx.lineTo(offset_x + -vertex[0] * scale, offset_y + vertex[1] * scale);
         }
 
-        ctx.strokeStyle = colors[colorIndex++ % colors.length];
-        ctx.stroke();
+        ctx.fillStyle = face.color;
+        ctx.fill();
     }
 
     window.copy = copy; //somente para debug

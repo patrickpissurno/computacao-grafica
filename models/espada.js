@@ -1,5 +1,5 @@
 window.model = {
-    scale: 32,
+    scale: 16,
     offset: [-6,16,-1],
     faces: [
         /** LAMINA **/
@@ -10,7 +10,7 @@ window.model = {
             [8,-2,0],
             [6,0,0],
             [4,-2,0],
-        ] },
+        ], c: 'lime' },
 
         //traseira (lâmina)
         { v: [
@@ -19,7 +19,7 @@ window.model = {
             [4,-2,2],
             [6,0,2],
             [8,-2,2],
-        ] },
+        ], c: 'magenta' },
 
         //lateral esquerda (lâmina)
         { v: [
@@ -27,7 +27,7 @@ window.model = {
             [4,-21,2],
             [4,-2,2],
             [4,-2,0],
-        ] },
+        ], c: 'blue' },
 
         //lateral direita (lâmina)
         { v: [
@@ -35,7 +35,7 @@ window.model = {
             [8,-21,0],
             [8,-2,0],
             [8,-2,2],
-        ] },
+        ], c: 'orange' },
 
         //superior esquerda (lâmina)
         { v: [
@@ -43,7 +43,7 @@ window.model = {
             [4,-2,2],
             [6,0,2],
             [6,0,0],
-        ] },
+        ], c: 'cyan' },
 
         //superior direita (lâmina)
         { v: [
@@ -51,7 +51,7 @@ window.model = {
             [8,-2,0],
             [6,0,0],
             [6,0,2],
-        ] },
+        ], c: 'red' },
 
         /** GUARDA-MÃO **/
         //frontal (guarda-mão)
@@ -60,7 +60,7 @@ window.model = {
             [0,-23,0],
             [12,-23,0],
             [12,-21,0],
-        ] },
+        ], c: 'lime' },
 
         //traseira (guarda-mão)
         { v: [
@@ -68,7 +68,7 @@ window.model = {
             [0,-23,2],
             [0,-21,2],
             [12,-21,2],
-        ] },
+        ], c: 'magenta' },
 
         //esquerda (guarda-mão)
         { v: [
@@ -76,7 +76,7 @@ window.model = {
             [0,-23,2],
             [0,-21,2],
             [0,-21,0],
-        ] },
+        ], c: 'blue' },
 
         //direita (guarda-mão)
         { v: [
@@ -84,7 +84,7 @@ window.model = {
             [12,-23,0],
             [12,-21,0],
             [12,-21,2],
-        ] },
+        ], c: 'orange' },
 
         //superior (guarda-mão)
         { v: [
@@ -92,7 +92,7 @@ window.model = {
             [12,-21,0],
             [12,-21,2],
             [0,-21,2],
-        ] },
+        ], c: 'cyan' },
 
         //inferior (guarda-mão)
         { v: [
@@ -100,7 +100,7 @@ window.model = {
             [12,-23,2],
             [12,-23,0],
             [0,-23,0],
-        ] },
+        ], c: 'red' },
 
         /** CABO **/
         //frontal (cabo)
@@ -109,7 +109,7 @@ window.model = {
             [5,-30,0],
             [7,-30,0],
             [7,-23,0],
-        ] },
+        ], c: 'lime' },
 
         //traseira (cabo)
         { v: [
@@ -117,7 +117,7 @@ window.model = {
             [5,-30,2],
             [5,-23,2],
             [7,-23,2],
-        ] },
+        ], c: 'magenta' },
 
         //lateral esquerda (cabo)
         { v: [
@@ -125,7 +125,7 @@ window.model = {
             [5,-30,2],
             [5,-23,2],
             [5,-23,0],
-        ] },
+        ], c: 'blue' },
 
         //lateral direita (cabo)
         { v: [
@@ -133,7 +133,7 @@ window.model = {
             [7,-30,0],
             [7,-23,0],
             [7,-23,2],
-        ] },
+        ], c: 'orange' },
 
         /** POMO **/
         //frontal (pomo)
@@ -142,7 +142,7 @@ window.model = {
             [4,-31,0],
             [8,-31,0],
             [8,-30,0],
-        ] },
+        ], c: 'cyan' },
 
         //traseira (pomo)
         { v: [
@@ -150,7 +150,7 @@ window.model = {
             [4,-31,2],
             [4,-30,2],
             [8,-30,2],
-        ] },
+        ], c: 'red' },
 
         //esquerda (pomo)
         { v: [
@@ -158,7 +158,7 @@ window.model = {
             [4,-31,2],
             [4,-30,2],
             [4,-30,0],
-        ] },
+        ], c: 'lime' },
 
         //direita (pomo)
         { v: [
@@ -166,7 +166,7 @@ window.model = {
             [8,-31,0],
             [8,-30,0],
             [8,-30,2],
-        ] },
+        ], c: 'magenta' },
 
         //superior (pomo)
         { v: [
@@ -174,7 +174,7 @@ window.model = {
             [4,-30,0],
             [4,-30,2],
             [8,-30,2],
-        ] },
+        ], c: 'blue' },
 
         //inferior (pomo)
         { v: [
@@ -182,6 +182,6 @@ window.model = {
             [4,-31,2],
             [4,-31,0],
             [8,-31,0],
-        ] },
+        ], c: 'orange' },
     ]
 }
