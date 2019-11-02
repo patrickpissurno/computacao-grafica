@@ -155,7 +155,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
-    
     //backface culling
     for(let i = 0; i < copy.faces.length; i++){
         const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
