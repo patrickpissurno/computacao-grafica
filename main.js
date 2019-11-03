@@ -55,10 +55,12 @@ class Face {
     /** 
      * @param {number[]} verticesIndices
      * @param {string} color
+     * @param {number[]} normalVector
     */
-    constructor(verticesIndices, color) {
+    constructor(verticesIndices, color, normalVector) {
         this.vertices = verticesIndices;
         this.color = color;
+        this.normalVector = normalVector;
     }
 }
 
@@ -95,7 +97,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f, face.c));
+            faces.push(new Face(f, face.c, null));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -155,7 +157,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
-    //backface culling
+    // calcula vetores normais das faces
     for(let i = 0; i < copy.faces.length; i++){
         const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
         const v0 = vertices[0];
@@ -163,9 +165,10 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         const v2 = vertices[2];
         const vectorA = [ v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] ]; //v1 - v0
         const vectorB = [ v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2] ]; //v2 - v1
-        const normalVector = crossProduct(vectorA, vectorB);
+        copy.faces[i].normalVector = crossProduct(vectorA, vectorB);
         
-        const cos = dotProduct(normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
+        // backface culling
+        const cos = dotProduct(copy.faces[i].normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
         if(cos < -0.005) //aproximação para evitar glitches por conta de erro de ponto flutuante
             copy.faces[i] = null;
     }
