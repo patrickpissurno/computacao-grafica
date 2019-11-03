@@ -1,3 +1,5 @@
+const chroma = window.chroma;
+
 function multiplyMatrices(m1, m2) {
     const result = [];
     for (let i = 0; i < m1.length; i++) {
@@ -56,11 +58,13 @@ class Face {
      * @param {number[]} verticesIndices
      * @param {string} color
      * @param {number[]} normalVector
+     * @param {number[]} center
     */
-    constructor(verticesIndices, color, normalVector) {
+    constructor(verticesIndices, color, normalVector, center) {
         this.vertices = verticesIndices;
         this.color = color;
         this.normalVector = normalVector;
+        this.center = center;
     }
 }
 
@@ -97,7 +101,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f, face.c, null));
+            faces.push(new Face(f, face.c, null, null));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -149,7 +153,6 @@ const CAMERA_ZF = 1;
 
 /** @param {Obj} obj */
 function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
-    ctx.clearRect(0, 0, 800, 600); //limpa a tela
 
     /** @type {Model} */
     const copy = obj.model.clone();
@@ -157,7 +160,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let vertice of copy.vertices)
         vertice.push(1); //adiciona a coordenada homogênea
 
-    // calcula vetores normais das faces
+    // calcula vetores normais e centróides das faces
     for(let i = 0; i < copy.faces.length; i++){
         const vertices = copy.faces[i].vertices.map(j => copy.vertices[j]);
         const v0 = vertices[0];
@@ -165,7 +168,12 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         const v2 = vertices[2];
         const vectorA = [ v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] ]; //v1 - v0
         const vectorB = [ v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2] ]; //v2 - v1
-        copy.faces[i].normalVector = crossProduct(vectorA, vectorB);
+        let normalVector = crossProduct(vectorA, vectorB);
+
+        let normalVector_size = Math.sqrt(normalVector.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+        copy.faces[i].normalVector = normalVector.map(x => x / normalVector_size);
+
+        copy.faces[i].center = vertices.reduce((acc, it) => [ acc[0] + it[0], acc[1] + it[1], acc[2] + it[2], acc[3] + it[3] ], [0, 0, 0, 0]).map(x => x / vertices.length);
         
         // backface culling
         const cos = dotProduct(copy.faces[i].normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
@@ -191,16 +199,41 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
     //algoritmo painter: reordena as faces de trás para frente em relação à camera
     copy.faces.sort((a, b) => {
-        let aV = a.vertices.map(i => copy.vertices[i]);
-        let bV = b.vertices.map(i => copy.vertices[i]);
-
-        let centerA = aV.reduce((acc, it) => [ acc[0] + it[0], acc[1] + it[1], acc[2] + it[2], acc[3] + it[3] ], [0, 0, 0, 0]).map(x => x / a.vertices.length);
-        let centerB = bV.reduce((acc, it) => [ acc[0] + it[0], acc[1] + it[1], acc[2] + it[2], acc[3] + it[3] ], [0, 0, 0, 0]).map(x => x / b.vertices.length);
-        
-        let distA = squaredDistance(centerA, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
-        let distB = squaredDistance(centerB, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
+        let distA = squaredDistance(a.center, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
+        let distB = squaredDistance(b.center, [ CAMERA_X, CAMERA_Y, CAMERA_Z, 1 ]);
         return distB - distA;
     });
+
+    //iluminação e shading
+    for(let face of copy.faces){
+        let color = [0, 0, 0];
+        for(let light of window.lights){            
+            switch(light.type){
+                case 'ambient': {
+                    let lab = chroma(light.color).lab();
+                    color[0] += lab[0];
+                    color[1] += lab[1];
+                    color[2] += lab[2];
+                    break;
+                }
+                case 'directional': {
+                    let vectorA = [ -light.position[0] - face.center[0], light.position[1] - face.center[1], -light.position[2] - face.center[2] ];
+                    let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+                    vectorA = vectorA.map(x => x / vectorA_size);
+
+                    let lab = chroma(light.color).lab();
+                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0);
+
+                    color[0] += lab[0];
+                    color[1] += lab[1];
+                    color[2] += lab[2];
+                    break;
+                }
+            }
+        }
+        let lcolor = chroma.lab([ color[0], color[1] / window.lights.length, color[2] / window.lights.length ]);
+        face.color = chroma.blend(chroma(face.color), lcolor, 'multiply');
+    }
 
     let projetado = multiplyMatrices(perspectiva, [
         [1, 0, 0, 0],
@@ -212,6 +245,10 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     for(let i = 0; i < projetado.length; i++)
     for(let j = 0; j < projetado[i].length; j++)
         copy.vertices[i][j] = projetado[i][j];
+
+    // limpa a tela
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 800, 600);
 
     for(let face of copy.faces){
         ctx.beginPath();
