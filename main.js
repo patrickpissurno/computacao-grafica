@@ -222,7 +222,23 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                     vectorA = vectorA.map(x => x / vectorA_size);
 
                     let lab = chroma(light.color).lab();
-                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0);
+                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0); //ângulo da face
+
+                    color[0] += lab[0];
+                    color[1] += lab[1];
+                    color[2] += lab[2];
+                    break;
+                }
+                case 'point': {
+                    let vectorA = [ -light.position[0] - face.center[0], light.position[1] - face.center[1], -light.position[2] - face.center[2] ];
+                    let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+                    vectorA = vectorA.map(x => x / vectorA_size);
+
+                    let lab = chroma(light.color).lab();
+                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0); //ângulo da face
+
+                    let lpos = [ light.position[0], light.position[1], light.position[2], 1 ];
+                    lab[0] *= 1 / (squaredDistance(face.center, lpos) * 0.25);
 
                     color[0] += lab[0];
                     color[1] += lab[1];
