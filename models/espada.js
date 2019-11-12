@@ -10,7 +10,7 @@ window.model = {
             [8,-2,0],
             [6,0,0],
             [4,-2,0],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         //traseira (lâmina)
         { v: [
@@ -19,7 +19,7 @@ window.model = {
             [4,-2,2],
             [6,0,2],
             [8,-2,2],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         //lateral esquerda (lâmina)
         { v: [
@@ -27,7 +27,7 @@ window.model = {
             [4,-21,0],
             [4,-2,0],
             [4,-2,2],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         //lateral direita (lâmina)
         { v: [
@@ -35,7 +35,7 @@ window.model = {
             [8,-21,2],
             [8,-2,2],
             [8,-2,0],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         //superior esquerda (lâmina)
         { v: [
@@ -43,7 +43,7 @@ window.model = {
             [4,-2,0],
             [6,0,0],
             [6,0,2],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         //superior direita (lâmina)
         { v: [
@@ -51,7 +51,7 @@ window.model = {
             [8,-2,2],
             [6,0,2],
             [6,0,0],
-        ], c: '#999' },
+        ], c: '#999', s: false },
 
         /** GUARDA-MÃO **/
         //frontal esquerda (guarda-mão)
@@ -60,7 +60,7 @@ window.model = {
             [0,-23,0],
             [5,-23,0],
             [5,-21,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //frontal central (guarda-mão)
         { v: [
@@ -68,7 +68,7 @@ window.model = {
             [5,-23,0],
             [7,-23,0],
             [7,-21,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //frontal direita (guarda-mão)
         { v: [
@@ -76,7 +76,7 @@ window.model = {
             [7,-23,0],
             [12,-23,0],
             [12,-21,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //traseira esquerda (guarda-mão)
         { v: [
@@ -84,7 +84,7 @@ window.model = {
             [0,-23,2],
             [0,-21,2],
             [5,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //traseira central (guarda-mão)
         { v: [
@@ -92,7 +92,7 @@ window.model = {
             [5,-23,2],
             [5,-21,2],
             [7,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //traseira direita (guarda-mão)
         { v: [
@@ -100,7 +100,7 @@ window.model = {
             [7,-23,2],
             [7,-21,2],
             [12,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //esquerda (guarda-mão)
         { v: [
@@ -108,7 +108,7 @@ window.model = {
             [0,-23,0],
             [0,-21,0],
             [0,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //direita (guarda-mão)
         { v: [
@@ -116,7 +116,7 @@ window.model = {
             [12,-23,2],
             [12,-21,2],
             [12,-21,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //superior esquerda (guarda-mão)
         { v: [
@@ -124,7 +124,7 @@ window.model = {
             [4,-21,0],
             [4,-21,2],
             [0,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //superior direita (guarda-mão)
         { v: [
@@ -132,7 +132,7 @@ window.model = {
             [12,-21,0],
             [12,-21,2],
             [8,-21,2],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //inferior esquerda (guarda-mão)
         { v: [
@@ -140,7 +140,7 @@ window.model = {
             [5,-23,2],
             [5,-23,0],
             [0,-23,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         //inferior direita (guarda-mão)
         { v: [
@@ -148,7 +148,7 @@ window.model = {
             [12,-23,2],
             [12,-23,0],
             [7,-23,0],
-        ], c: '#993' },
+        ], c: '#993', s: false },
 
         /** CABO **/
         //frontal (cabo)
@@ -157,7 +157,7 @@ window.model = {
             [5,-30,0],
             [7,-30,0],
             [7,-23,0],
-        ], c: '#3d2813' },
+        ], c: '#3d2813', s: true },
 
         //traseira (cabo)
         { v: [
@@ -165,7 +165,7 @@ window.model = {
             [5,-30,2],
             [5,-23,2],
             [7,-23,2],
-        ], c: '#3d2813' },
+        ], c: '#3d2813', s: true },
 
         //lateral esquerda (cabo)
         { v: [
@@ -173,7 +173,7 @@ window.model = {
             [5,-30,0],
             [5,-23,0],
             [5,-23,2],
-        ], c: '#3d2813' },
+        ], c: '#3d2813', s: true },
 
         //lateral direita (cabo)
         { v: [
@@ -181,7 +181,7 @@ window.model = {
             [7,-30,2],
             [7,-23,2],
             [7,-23,0],
-        ], c: '#3d2813' },
+        ], c: '#3d2813', s: true },
 
         /** POMO **/
         //frontal (pomo)
@@ -190,7 +190,7 @@ window.model = {
             [4,-31,0],
             [8,-31,0],
             [8,-30,0],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //traseira (pomo)
         { v: [
@@ -198,7 +198,7 @@ window.model = {
             [4,-31,2],
             [4,-30,2],
             [8,-30,2],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //esquerda (pomo)
         { v: [
@@ -206,7 +206,7 @@ window.model = {
             [4,-31,0],
             [4,-30,0],
             [4,-30,2],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //direita (pomo)
         { v: [
@@ -214,7 +214,7 @@ window.model = {
             [8,-31,2],
             [8,-30,2],
             [8,-30,0],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //superior esquerda (pomo)
         { v: [
@@ -222,7 +222,7 @@ window.model = {
             [5,-30,2],
             [4,-30,2],
             [4,-30,0],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //superior direita (pomo)
         { v: [
@@ -230,7 +230,7 @@ window.model = {
             [8,-30,2],
             [7,-30,2],
             [7,-30,0],
-        ], c: '#994' },
+        ], c: '#994', s: false },
 
         //inferior (pomo)
         { v: [
@@ -238,6 +238,6 @@ window.model = {
             [8,-31,0],
             [4,-31,0],
             [4,-31,2],
-        ], c: '#994' },
+        ], c: '#994', s: false },
     ]
 }

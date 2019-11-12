@@ -1,7 +1,7 @@
 window.lights = [
     {
         type: 'ambient',
-        color: '#333'
+        color: '#777'
     },
     {
         type: 'point',

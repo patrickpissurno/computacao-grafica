@@ -53,6 +53,59 @@ function crossProduct(vectorA, vectorB){
     return [ x, y, z ];
 }
 
+/**
+ * computa a iluminação em um vértice
+ * @param {number[]} vertex 
+ * @param {number[]} normalVector 
+ * @param {any} vertexTint cor do vértice
+ * @returns {number[]} rgb color
+ */
+function computeShadingAtVertex(vertex, normalVector, vertexTint){
+    let color = [0, 0, 0];
+    for(let light of window.lights){            
+        switch(light.type){
+            case 'ambient': {
+                let lab = chroma(light.color).lab();
+                color[0] += lab[0];
+                color[1] += lab[1];
+                color[2] += lab[2];
+                break;
+            }
+            case 'directional': {
+                let vectorA = [ -light.position[0] - vertex[0], light.position[1] - vertex[1], -light.position[2] - vertex[2] ];
+                let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+                vectorA = vectorA.map(x => x / vectorA_size);
+
+                let lab = chroma(light.color).lab();
+                lab[0] *= Math.max(dotProduct(vectorA, normalVector), 0); //ângulo da face
+
+                color[0] += lab[0];
+                color[1] += lab[1];
+                color[2] += lab[2];
+                break;
+            }
+            case 'point': {
+                let vectorA = [ -light.position[0] - vertex[0], light.position[1] - vertex[1], -light.position[2] - vertex[2] ];
+                let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+                vectorA = vectorA.map(x => x / vectorA_size);
+
+                let lab = chroma(light.color).lab();
+                lab[0] *= Math.max(dotProduct(vectorA, normalVector), 0); //ângulo da face
+
+                let lpos = [ light.position[0], light.position[1], light.position[2], 1 ];
+                lab[0] *= 1 / (squaredDistance(vertex, lpos) * 0.25);
+
+                color[0] += lab[0];
+                color[1] += lab[1];
+                color[2] += lab[2];
+                break;
+            }
+        }
+    }
+    let lcolor = chroma.lab([ color[0], color[1] / window.lights.length, color[2] / window.lights.length ]);
+    return chroma.blend(chroma(vertexTint), lcolor, 'multiply');
+}
+
 class Face {
     /** 
      * @param {number[]} verticesIndices
@@ -206,49 +259,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
     //iluminação e shading
     for(let face of copy.faces){
-        let color = [0, 0, 0];
-        for(let light of window.lights){            
-            switch(light.type){
-                case 'ambient': {
-                    let lab = chroma(light.color).lab();
-                    color[0] += lab[0];
-                    color[1] += lab[1];
-                    color[2] += lab[2];
-                    break;
-                }
-                case 'directional': {
-                    let vectorA = [ -light.position[0] - face.center[0], light.position[1] - face.center[1], -light.position[2] - face.center[2] ];
-                    let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
-                    vectorA = vectorA.map(x => x / vectorA_size);
-
-                    let lab = chroma(light.color).lab();
-                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0); //ângulo da face
-
-                    color[0] += lab[0];
-                    color[1] += lab[1];
-                    color[2] += lab[2];
-                    break;
-                }
-                case 'point': {
-                    let vectorA = [ -light.position[0] - face.center[0], light.position[1] - face.center[1], -light.position[2] - face.center[2] ];
-                    let vectorA_size = Math.sqrt(vectorA.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
-                    vectorA = vectorA.map(x => x / vectorA_size);
-
-                    let lab = chroma(light.color).lab();
-                    lab[0] *= Math.max(dotProduct(vectorA, face.normalVector), 0); //ângulo da face
-
-                    let lpos = [ light.position[0], light.position[1], light.position[2], 1 ];
-                    lab[0] *= 1 / (squaredDistance(face.center, lpos) * 0.25);
-
-                    color[0] += lab[0];
-                    color[1] += lab[1];
-                    color[2] += lab[2];
-                    break;
-                }
-            }
-        }
-        let lcolor = chroma.lab([ color[0], color[1] / window.lights.length, color[2] / window.lights.length ]);
-        face.color = chroma.blend(chroma(face.color), lcolor, 'multiply');
+        face.color = computeShadingAtVertex(face.center, face.normalVector, face.color);
     }
 
     let projetado = multiplyMatrices(perspectiva, [

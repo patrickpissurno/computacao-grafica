@@ -8,41 +8,41 @@ window.model = {
             [1,0,0],
             [1,1,0],
             [0,1,0]
-        ], c: 'lime' },
+        ], c: 'lime', s: false },
         //traseira
         { v: [
             [1,0,1],
             [0,0,1],
             [0,1,1],
             [1,1,1]
-        ], c: 'magenta' },
+        ], c: 'magenta', s: false },
         //esquerda
         { v: [
             [0,0,1],
             [0,0,0],
             [0,1,0],
             [0,1,1]
-        ], c: 'blue' },
+        ], c: 'blue', s: false },
         //direita
         { v: [
             [1,0,0],
             [1,0,1],
             [1,1,1],
             [1,1,0]
-        ], c: 'orange' },
+        ], c: 'orange', s: false },
         //cima
         { v: [
             [0,1,0],
             [1,1,0],
             [1,1,1],
             [0,1,1]
-        ], c: 'cyan' },
+        ], c: 'cyan', s: false },
         //baixo
         { v: [
             [0,0,1],
             [1,0,1],
             [1,0,0],
             [0,0,0]
-        ], c: 'red' },
+        ], c: 'red', s: false },
     ]
 }
