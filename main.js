@@ -398,18 +398,41 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                     svs[i].push({ xy: [x, y], v: c[i] });
             }
 
-            for(let i = min_x; i <= max_x; i++)
             for(let j = min_y; j <= max_y; j++){
-                if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
+                let sx = null;
+                let ex = null;
+
+                for(let i = min_x; i <= max_x; i++){
+                    if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
+                        continue;
+                    if(sx == null)    
+                        sx = i;
+                    if(ex == null || i > ex)
+                        ex = i;
+                }
+
+                if(sx == null || ex == null)
                     continue;
 
-                let color = [];
+                let color_start = [];
+                let color_end = [];
+                
                 for(let sv of svs)
-                    color.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, i, j, min_x, max_x, min_y, max_y));
+                    color_start.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, sx, j, min_x, max_x, min_y, max_y));
+
+                for(let sv of svs)
+                    color_end.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, ex, j, min_x, max_x, min_y, max_y));
+
+                color_start = chroma.lab(color_start);
+                color_end = chroma.lab(color_end);
+
+                let grd = ctx.createLinearGradient(0, 0, 170, 0);
+                grd.addColorStop(0, color_start);
+                grd.addColorStop(1, color_end);
 
                 //renderiza o pixel
-                ctx.fillStyle = chroma.lab(color);
-                ctx.fillRect(i, j, 1, 1);
+                ctx.fillStyle = grd;
+                ctx.fillRect(sx, j, ex - sx + 1, 1);
             }
             ctx.closePath();
         }
@@ -480,4 +503,4 @@ function renderLoop(){
 
 //start
 nextKeyframe();
-setInterval(renderLoop, 1000/20);
+setInterval(renderLoop, 1000/60);
