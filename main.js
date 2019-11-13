@@ -400,8 +400,8 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
                 vs.unshift(vs[3]);
                 for (let i = 0; i < vs.length - 1; i++){
-                    var xc = (vs[i].x + vs[i + 1].x) / 2;
-                    var yc = (vs[i].y + vs[i + 1].y) / 2;
+                    let xc = (vs[i].x + vs[i + 1].x) / 2;
+                    let yc = (vs[i].y + vs[i + 1].y) / 2;
                     ctx.quadraticCurveTo(vs[i].x, vs[i].y, xc, yc);
                 }
 
