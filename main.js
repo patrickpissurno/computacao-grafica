@@ -1,5 +1,6 @@
 const WIDTH = 800;
 const HEIGHT = 600;
+const FAST_SMOOTH_SHADING = true;
 
 const chroma = window.chroma;
 
@@ -375,6 +376,10 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
             if(max_y == null || y > max_y)
                 max_y = y;
         }
+
+        if(window.min_y == null || min_y < window.min_y)
+            window.min_y = min_y;
+        min_y = window.min_y;
         
         if(!face.smoothShading){
             ctx.fillStyle = face.color;
@@ -403,8 +408,8 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 let ex = null;
 
                 for(let i = min_x; i <= max_x; i++){
-                    if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
-                        continue;
+                    // if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
+                    //     continue;
                     if(sx == null)    
                         sx = i;
                     if(ex == null || i > ex)
@@ -419,20 +424,34 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 
                 for(let sv of svs)
                     color_start.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, sx, j, min_x, max_x, min_y, max_y));
-
+                
                 for(let sv of svs)
                     color_end.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, ex, j, min_x, max_x, min_y, max_y));
 
                 color_start = chroma.lab(color_start);
                 color_end = chroma.lab(color_end);
 
-                let grd = ctx.createLinearGradient(0, 0, 170, 0);
+                let grd = ctx.createLinearGradient(sx, j, ex + 1, j);
                 grd.addColorStop(0, color_start);
                 grd.addColorStop(1, color_end);
+                
+                //adiciona um ponto central no gradiente para ficar mais preciso
+                if(!FAST_SMOOTH_SHADING){
+                    let color_middle = [];
+                    for(let sv of svs)
+                        color_middle.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, Math.floor((sx + ex) / 2), j, min_x, max_x, min_y, max_y));
+                    color_middle = chroma.lab(color_middle);
+                    grd.addColorStop(0.5, color_middle);
+                }
 
                 //renderiza o pixel
                 ctx.fillStyle = grd;
                 ctx.fillRect(sx, j, ex - sx + 1, 1);
+
+                // ctx.fillStyle = color_start;
+                // ctx.fillRect(sx, j, 1, 1);
+                // ctx.fillStyle = color_end;
+                // ctx.fillRect(ex, j, 1, 1);
             }
             ctx.closePath();
         }
