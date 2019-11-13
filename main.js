@@ -148,14 +148,16 @@ class Face {
      * @param {number[]} center
      * @param {boolean} smoothShading
      * @param {boolean} culled
+     * @param {boolean} bezier
     */
-    constructor(verticesIndices, color, normalVector, center, smoothShading, culled) {
+    constructor(verticesIndices, color, normalVector, center, smoothShading, culled, bezier) {
         this.vertices = verticesIndices;
         this.color = color;
         this.normalVector = normalVector;
         this.center = center;
         this.smoothShading = smoothShading;
         this.culled = culled;
+        this.bezier = bezier;
     }
 }
 
@@ -192,7 +194,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f, face.c, null, null, face.s, false));
+            faces.push(new Face(f, face.c, null, null, face.s, false, face.b ? true : false));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -361,6 +363,8 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         let max_x = null;
         let min_y = null;
         let max_y = null;
+
+        let vs = [];
         
         for(let n = 0; n < face.vertices.length + 1; n++){
             const v = face.vertices[n % face.vertices.length];
@@ -368,6 +372,9 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
             let x = Math.floor(offset_x + -vertex[0] * scale);
             let y = Math.floor(offset_y + vertex[1] * scale);
+
+            vs.push({ x, y });
+
             ctx.lineTo(x, y);
 
             if(min_x == null || x < min_x)
@@ -382,10 +389,27 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         }
         
         if(WIREFRAME){
-            ctx.fillStyle = '#000';
-            ctx.fill();
-            ctx.strokeStyle = '#FFF';
-            ctx.stroke();
+            if(!face.bezier){
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                ctx.strokeStyle = '#FFF';
+                ctx.stroke();
+            }
+            else {
+                ctx.beginPath();
+
+                vs.unshift(vs[3]);
+                for (let i = 0; i < vs.length - 1; i++){
+                    var xc = (vs[i].x + vs[i + 1].x) / 2;
+                    var yc = (vs[i].y + vs[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(vs[i].x, vs[i].y, xc, yc);
+                }
+
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                ctx.strokeStyle = '#FFF';
+                ctx.stroke();
+            }
         }
         else if(!face.smoothShading){ //flat shading
             ctx.fillStyle = face.color;
