@@ -355,6 +355,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
             
         ctx.beginPath();
 
+        //bounding box
         let min_x = null;
         let max_x = null;
         let min_y = null;
@@ -412,10 +413,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                         squaredDistance([x, y], [ max_x, max_y ]),
                     ] });
                 }
-
-                // ctx.fillStyle = face.color[n];
-                // console.log(face.color[n].toString());
-                // ctx.fillRect(x, y, 1, 1);
             }
 
             //ordena os vértices de acordo com suas distancias para os pontos do bounding box
@@ -429,13 +426,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 }
                 svs[i] = ordered.filter(x => x != null);
             }
-
-            // for(let i = 0; i < svs[0].length; i++)
-            // {
-            //     ctx.fillStyle = chroma.lab(svs[0][i].v, svs[1][i].v, svs[2][i].v);
-            //     console.log(ctx.fillStyle.toString());
-            //     ctx.fillRect(svs[0][i].xy[0], svs[0][i].xy[1], 1, 1);
-            // }
 
             //line fill da face com gradientes de smooth shading
             for(let j = min_y; j <= max_y; j++){
@@ -483,13 +473,6 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 //renderiza a linha
                 ctx.fillStyle = grd;
                 ctx.fillRect(sx, j, ex - sx + 1, 1);
-
-                // if((sx == min_x || ex == max_x) && (j == min_y || j == max_y)){
-                //     ctx.fillStyle = color_start;
-                //     ctx.fillRect(sx, j, 1, 1);
-                //     ctx.fillStyle = color_end;
-                //     ctx.fillRect(ex - 3, j, 1, 1);
-                // }
             }
             ctx.closePath();
         }
@@ -561,4 +544,3 @@ function renderLoop(){
 //start
 nextKeyframe();
 setInterval(renderLoop, 1000/60);
-// renderLoop();
