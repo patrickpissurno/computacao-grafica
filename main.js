@@ -347,6 +347,8 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+    let smooth_min_y = null;
+
     for(let face of copy.faces){
         if(face.culled)
             continue;
@@ -376,19 +378,22 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
             if(max_y == null || y > max_y)
                 max_y = y;
         }
-
-        if(window.min_y == null || min_y < window.min_y)
-            window.min_y = min_y;
-        min_y = window.min_y;
         
-        if(!face.smoothShading){
+        if(!face.smoothShading){ //flat shading
             ctx.fillStyle = face.color;
             ctx.fill();
         }
-        else {
+        else { //técnica de Gouraud para smooth shading
+
             if(face.vertices.length !== 4)
                 throw new Error('smooth shading requires 4 vertices per face (blame it on the bilinear interpolation)');
 
+            //serve para manter o bounding box uniforme
+            if(smooth_min_y == null || min_y < smooth_min_y)
+                smooth_min_y = min_y;
+            min_y = smooth_min_y;
+
+            //gera estruturas de dados que facilitam o processo de shading
             let svs = [[], [], []];
             for(let n = 0; n < face.vertices.length; n++){
                 const v = face.vertices[n];
@@ -399,38 +404,69 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
                 let c = face.color[n].lab();
 
-                for(let i = 0; i < svs.length; i++)
-                    svs[i].push({ xy: [x, y], v: c[i] });
+                for(let i = 0; i < svs.length; i++){
+                    svs[i].push({ xy: [x, y], v: c[i], dists: [
+                        squaredDistance([x, y], [ min_x, min_y ]),
+                        squaredDistance([x, y], [ max_x, min_y ]),
+                        squaredDistance([x, y], [ min_x, max_y ]),
+                        squaredDistance([x, y], [ max_x, max_y ]),
+                    ] });
+                }
+
+                // ctx.fillStyle = face.color[n];
+                // console.log(face.color[n].toString());
+                // ctx.fillRect(x, y, 1, 1);
             }
 
+            //ordena os vértices de acordo com suas distancias para os pontos do bounding box
+            for(let i = 0; i < svs.length; i++){
+                let ordered = [null, null, null, null];
+                for(let sv of svs[i]){
+                    let pos = sv.dists.indexOf(Math.min(...sv.dists));
+                    while(ordered[pos] != null)
+                        pos += 1;
+                    ordered[pos] = sv;
+                }
+                svs[i] = ordered.filter(x => x != null);
+            }
+
+            // for(let i = 0; i < svs[0].length; i++)
+            // {
+            //     ctx.fillStyle = chroma.lab(svs[0][i].v, svs[1][i].v, svs[2][i].v);
+            //     console.log(ctx.fillStyle.toString());
+            //     ctx.fillRect(svs[0][i].xy[0], svs[0][i].xy[1], 1, 1);
+            // }
+
+            //line fill da face com gradientes de smooth shading
             for(let j = min_y; j <= max_y; j++){
-                let sx = null;
-                let ex = null;
+                let sx = null; //inicio da linha em x
+                let ex = null; //fim da linha em x
 
                 for(let i = min_x; i <= max_x; i++){
-                    // if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
-                    //     continue;
+                    if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face (clipping)
+                        continue;
                     if(sx == null)    
                         sx = i;
                     if(ex == null || i > ex)
                         ex = i;
                 }
 
-                if(sx == null || ex == null)
+                if(sx == null || ex == null) //pixel fora da face
                     continue;
 
                 let color_start = [];
                 let color_end = [];
                 
                 for(let sv of svs)
-                    color_start.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, sx, j, min_x, max_x, min_y, max_y));
+                    color_start.push(bilerp(sv[0].v, sv[2].v, sv[1].v, sv[3].v, sx, j, min_x, max_x, min_y, max_y)); //interpola o shading do vertice de inicio da linha
                 
                 for(let sv of svs)
-                    color_end.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, ex, j, min_x, max_x, min_y, max_y));
+                    color_end.push(bilerp(sv[0].v, sv[2].v, sv[1].v, sv[3].v, ex, j, min_x, max_x, min_y, max_y)); //interpola o shading do vertice de inicio da fim
 
                 color_start = chroma.lab(color_start);
                 color_end = chroma.lab(color_end);
 
+                //gera gradiente
                 let grd = ctx.createLinearGradient(sx, j, ex + 1, j);
                 grd.addColorStop(0, color_start);
                 grd.addColorStop(1, color_end);
@@ -439,19 +475,21 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 if(!FAST_SMOOTH_SHADING){
                     let color_middle = [];
                     for(let sv of svs)
-                        color_middle.push(bilerp(sv[0].v, sv[1].v, sv[2].v, sv[3].v, Math.floor((sx + ex) / 2), j, min_x, max_x, min_y, max_y));
+                        color_middle.push(bilerp(sv[0].v, sv[2].v, sv[1].v, sv[3].v, Math.floor((sx + ex) / 2), j, min_x, max_x, min_y, max_y)); //interpola o shading do vertice de meio da linha
                     color_middle = chroma.lab(color_middle);
                     grd.addColorStop(0.5, color_middle);
                 }
 
-                //renderiza o pixel
+                //renderiza a linha
                 ctx.fillStyle = grd;
                 ctx.fillRect(sx, j, ex - sx + 1, 1);
 
-                // ctx.fillStyle = color_start;
-                // ctx.fillRect(sx, j, 1, 1);
-                // ctx.fillStyle = color_end;
-                // ctx.fillRect(ex, j, 1, 1);
+                // if((sx == min_x || ex == max_x) && (j == min_y || j == max_y)){
+                //     ctx.fillStyle = color_start;
+                //     ctx.fillRect(sx, j, 1, 1);
+                //     ctx.fillStyle = color_end;
+                //     ctx.fillRect(ex - 3, j, 1, 1);
+                // }
             }
             ctx.closePath();
         }
@@ -523,3 +561,4 @@ function renderLoop(){
 //start
 nextKeyframe();
 setInterval(renderLoop, 1000/60);
+// renderLoop();
