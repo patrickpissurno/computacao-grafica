@@ -1,11 +1,11 @@
 window.lights = [
     {
         type: 'ambient',
-        color: '#111'
+        color: '#777'
     },
     {
         type: 'directional',
-        color: '#555',
-        position: [ 0, 0, -1000 ]
+        color: '#999',
+        position: [ 0, -2, -2 ]
     },
 ]

@@ -14,7 +14,7 @@ function multi(m1, m2) {
     return result;
 }
 
-const ANGLE = -1.13446;
+const ANGLE = -0.785398;
 
 window.animation = {
     loop: false,

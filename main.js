@@ -1,6 +1,8 @@
 const WIDTH = 800;
 const HEIGHT = 600;
 const FAST_SMOOTH_SHADING = true;
+const WIREFRAME = window.wireframe;
+const RENDER_ONLY_FIRST_FRAME = window.render_only_first_frame;
 
 const chroma = window.chroma;
 
@@ -344,8 +346,7 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         copy.vertices[i][j] = projetado[i][j];
 
     // limpa a tela
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
     let smooth_min_y = null;
 
@@ -380,7 +381,13 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
                 max_y = y;
         }
         
-        if(!face.smoothShading){ //flat shading
+        if(WIREFRAME){
+            ctx.fillStyle = '#000';
+            ctx.fill();
+            ctx.strokeStyle = '#FFF';
+            ctx.stroke();
+        }
+        else if(!face.smoothShading){ //flat shading
             ctx.fillStyle = face.color;
             ctx.fill();
         }
@@ -543,4 +550,8 @@ function renderLoop(){
 
 //start
 nextKeyframe();
-setInterval(renderLoop, 1000/60);
+
+if(RENDER_ONLY_FIRST_FRAME)
+    renderLoop();
+else
+    setInterval(renderLoop, 1000/60);
