@@ -1,3 +1,6 @@
+const WIDTH = 800;
+const HEIGHT = 600;
+
 const chroma = window.chroma;
 
 function multiplyMatrices(m1, m2) {
@@ -51,6 +54,84 @@ function crossProduct(vectorA, vectorB){
     const y = (vectorA[0] * vectorB[2]) - (vectorA[2] * vectorB[0]);
     const z = (vectorA[0] * vectorB[1]) - (vectorA[1] * vectorB[0]);
     return [ x, y, z ];
+}
+
+/** soma de vetores */
+function vectorSum(...vectors){
+    let r = [];
+    for(let i = 0; i < vectors[0].length; i++){
+        let v = 0;
+        for(let j = 0; j < vectors.length; j++)
+            v += vectors[j][i];
+        r.push(v);
+    }
+    return r;
+}
+
+/**
+ * regra de cramer, A * X = B, retorna X
+ * @param A matriz
+ * @param B vetor
+ */
+function solve2x2(A, B){
+    let a = A[0][0],
+        b = A[0][1],
+        c = A[1][0],
+        d = A[1][1],
+        e = B[0],
+        f = B[1];
+    let D = a * d - b * c;
+    let Dx = e * d - b * f;
+    let Dy = a * f - e * c;
+    return [ Dx / D, Dy / D ];
+}
+
+/** linear interpolation */
+function lerp(a, b, t){
+    return (1 - t) * a + t * b;
+}
+
+function bilerpInverse(p, p1, p2, p3, p4, iter){ //https://stackoverflow.com/a/18332009
+    let q = [0.5, 0.5]; //initial guess
+    for(let k = 0; k < iter; k++){
+        let s = q[0];
+        let t = q[1];
+        let r = vectorSum(p1.map(x => x * (1 - s) * (1 - t)), p2.map(x => x * s * (1 - t)), p3.map(x => x * s * t), p4.map(x => x * (1 - s) * t), p.map(x => -x)); //residual        
+        let Js = vectorSum(p1.map(x => -x * (1 - t)), p2.map(x => x * (1 - t)), p3.map(x => x * t), p4.map(x => -x * t)); //dr / ds
+        let Jt = vectorSum(p1.map(x => -x * (1 - s)), p2.map(x => -x * s), p3.map(x => x * s), p4.map(x => x * (1 - s))); //dr / dt
+        let J = [Js, Jt];
+        q = vectorSum(q, solve2x2(J, r).map(x => -x));
+        q = q.map(x => Math.max(Math.min(x, 1), 0));
+    }
+    return q;
+}
+
+/**
+ * @typedef BLPoint data structure to help with bilinear interpolation
+ * @property {number[]} xy x and y coords
+ * @property {number} v value
+ */
+
+/**
+ * bilinear interpolation
+ * @param {BLPoint} A point A
+ * @param {BLPoint} B point B
+ * @param {BLPoint} C point C
+ * @param {BLPoint} D point D
+ * @param {number[]} xy x and y coords
+ */
+function bilerp(A, B, C, D, xy){
+    // const dist_AB = distance(A.xy, B.xy);
+    // const dist_CD = distance(C.xy, D.xy);
+
+    // const R1 = (distance(B.xy, xy) / dist_AB) * A.v + (distance(A.xy, xy) / dist_AB) * B.v;
+    // const R2 = (distance(D.xy, xy) / dist_CD) * C.v + (distance(C.xy, xy) / dist_CD) * D.v;
+
+    // return (distance(C.xy, xy) / distance(A.xy, C.xy)) * R1 + (distance(D.xy, xy) / distance(B.xy, D.xy)) * R2;
+
+    let [ alpha, beta ] = bilerpInverse(xy, A.xy, B.xy, C.xy, D.xy, 3);
+
+    return (1 - alpha) * ((1 - beta) * A.v + beta * B.v) + alpha * ((1 - beta) * C.v + beta * D.v);
 }
 
 /**
@@ -112,12 +193,14 @@ class Face {
      * @param {string} color
      * @param {number[]} normalVector
      * @param {number[]} center
+     * @param {boolean} smoothShading
     */
-    constructor(verticesIndices, color, normalVector, center) {
+    constructor(verticesIndices, color, normalVector, center, smoothShading) {
         this.vertices = verticesIndices;
         this.color = color;
         this.normalVector = normalVector;
         this.center = center;
+        this.smoothShading = smoothShading;
     }
 }
 
@@ -154,7 +237,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f, face.c, null, null));
+            faces.push(new Face(f, face.c, null, null, face.s));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -259,7 +342,37 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
     //iluminação e shading
     for(let face of copy.faces){
-        face.color = computeShadingAtVertex(face.center, face.normalVector, face.color);
+        if(!face.smoothShading){
+            face.color = computeShadingAtVertex(face.center, face.normalVector, face.color);
+        }
+        else {
+            let colors = [];
+            for(let vertex of face.vertices){
+                //encontra todas as faces que esse vértice pertence e
+                //calcula a média das normais das faces
+                let avgNormal = [0,0,0];
+                let count = 0;
+
+                for(let f of copy.faces){
+                    if(f.smoothShading && f.vertices.indexOf(vertex) !== -1){
+                        avgNormal[0] += f.normalVector[0];
+                        avgNormal[1] += f.normalVector[1];
+                        avgNormal[2] += f.normalVector[2];
+                        count += 1;
+                    }
+                }
+                avgNormal.map(x => x / count);
+
+                //converte a normal média para vetor unitário
+                let avgNormal_size = Math.sqrt(avgNormal.map(x => Math.pow(x, 2)).reduce((acc, cur) => acc + cur));
+                avgNormal = avgNormal.map(x => x / avgNormal_size);
+
+                //calcula a o shading no vértice
+                colors.push(computeShadingAtVertex(copy.vertices[vertex], avgNormal, face.color));
+            }
+
+            face.color = colors;
+        }
     }
 
     let projetado = multiplyMatrices(perspectiva, [
@@ -275,19 +388,84 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
 
     // limpa a tela
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, 800, 600);
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     for(let face of copy.faces){
         ctx.beginPath();
 
+        let min_x = null;
+        let max_x = null;
+        let min_y = null;
+        let max_y = null;
+        
         for(let n = 0; n < face.vertices.length + 1; n++){
             const v = face.vertices[n % face.vertices.length];
             const vertex = copy.vertices[v];
-            ctx.lineTo(offset_x + -vertex[0] * scale, offset_y + vertex[1] * scale);
-        }
 
-        ctx.fillStyle = face.color;
-        ctx.fill();
+            let x = Math.floor(offset_x + -vertex[0] * scale);
+            let y = Math.floor(offset_y + vertex[1] * scale);
+            ctx.lineTo(x, y);
+
+            if(min_x == null || x < min_x)
+                min_x = x;
+            if(min_y == null || y < min_y)
+                min_y = y;
+
+            if(max_x == null || x > max_x)
+                max_x = x;
+            if(max_y == null || y > max_y)
+                max_y = y;
+        }
+        
+        if(!face.smoothShading){
+            ctx.fillStyle = face.color;
+            ctx.fill();
+        }
+        else {
+            if(face.vertices.length !== 4)
+                throw new Error('smooth shading requires 4 vertices per face (blame it on the bilinear interpolation)');
+
+            let svs = [[], [], []];
+            for(let n = 0; n < face.vertices.length; n++){
+                const v = face.vertices[n];
+                const vertex = copy.vertices[v];
+
+                let x = Math.floor(offset_x + -vertex[0] * scale);
+                let y = Math.floor(offset_y + vertex[1] * scale);
+
+                let c = face.color[n].lab();
+
+                for(let i = 0; i < svs.length; i++)
+                    svs[i].push({ xy: [x, y], v: c[i] });
+            }
+
+            for(let i = min_x; i <= max_x; i++)
+            for(let j = min_y; j <= max_y; j++){
+                if(!ctx.isPointInPath(i, j)) //verifica se o pixel está dentro da face
+                    continue;
+
+                let rendered = false;
+                for(let sv in svs[0]){
+                    if(svs[0][sv].xy[0] === i && svs[0][sv].xy[1] === j){
+                        ctx.fillStyle = chroma.lab([ svs[0][sv].v, svs[1][sv].v, svs[2][sv].v ]);
+                        // ctx.fillStyle = 'red';
+                        rendered = true;
+                        break;
+                    }
+                }
+
+                if(!rendered) {
+                    let color = [];
+                    for(let sv of svs)
+                        color.push(bilerp(sv[0], sv[1], sv[2], sv[3], [i, j]));
+
+                    //renderiza o pixel
+                    ctx.fillStyle = chroma.lab(color);
+                }
+                ctx.fillRect(i, j, 1, 1);
+            }
+            ctx.closePath();
+        }
     }
 
     window.copy = copy; //somente para debug
@@ -350,9 +528,10 @@ function renderLoop(){
         }
     }
 
-    renderObj(myObj, 80, 800/2, 600/2);
+    renderObj(myObj, 80, WIDTH/2, HEIGHT/2);
 }
 
 //start
 nextKeyframe();
-setInterval(renderLoop, 1000/60);
+renderLoop();
+// setInterval(renderLoop, 1000/20);
