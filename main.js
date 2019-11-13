@@ -144,13 +144,15 @@ class Face {
      * @param {number[]} normalVector
      * @param {number[]} center
      * @param {boolean} smoothShading
+     * @param {boolean} culled
     */
-    constructor(verticesIndices, color, normalVector, center, smoothShading) {
+    constructor(verticesIndices, color, normalVector, center, smoothShading, culled) {
         this.vertices = verticesIndices;
         this.color = color;
         this.normalVector = normalVector;
         this.center = center;
         this.smoothShading = smoothShading;
+        this.culled = culled;
     }
 }
 
@@ -187,7 +189,7 @@ class Model {
 
                 f.push(vmap[key]);
             }
-            faces.push(new Face(f, face.c, null, null, face.s));
+            faces.push(new Face(f, face.c, null, null, face.s, false));
         }
 
         //converte as coordenadas dos vértices do SRO para o SRU
@@ -263,8 +265,12 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
         
         // backface culling
         const cos = dotProduct(copy.faces[i].normalVector, [ CAMERA_XF, CAMERA_YF, CAMERA_ZF ]);
-        if(cos < -0.005) //aproximação para evitar glitches por conta de erro de ponto flutuante
-            copy.faces[i] = null;
+        if(cos < -0.005){ //aproximação para evitar glitches por conta de erro de ponto flutuante
+            if(!copy.faces[i].smoothShading)
+                copy.faces[i] = null;
+            else
+                copy.faces[i].culled = true;
+        }
     }
     copy.faces = copy.faces.filter(x => x != null);
 
@@ -341,6 +347,9 @@ function renderObj(obj, scale = 1, offset_x = 0, offset_y = 0){
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     for(let face of copy.faces){
+        if(face.culled)
+            continue;
+            
         ctx.beginPath();
 
         let min_x = null;
@@ -471,4 +480,4 @@ function renderLoop(){
 
 //start
 nextKeyframe();
-setInterval(renderLoop, 1000/30);
+setInterval(renderLoop, 1000/20);
