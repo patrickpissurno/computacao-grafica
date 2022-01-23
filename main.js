@@ -596,12 +596,12 @@ function renderLoop(){
     }
 
     renderObj(myObj, 80, WIDTH/2, HEIGHT/2);
+
+    if(!RENDER_ONLY_FIRST_FRAME)
+        requestAnimationFrame(renderLoop)
 }
 
 //start
 nextKeyframe();
 
-if(RENDER_ONLY_FIRST_FRAME)
-    renderLoop();
-else
-    setInterval(renderLoop, 1000/60);
+renderLoop();
